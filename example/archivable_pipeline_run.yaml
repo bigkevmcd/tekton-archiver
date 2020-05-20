@@ -1,0 +1,18 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: demo-pipeline-run
+  labels:
+    "archive.tekton.dev": "true"
+spec:
+  serviceAccountName: 'default'
+  pipelineSpec:
+    tasks:
+    - name: hello-task
+      taskSpec:
+        steps:
+        - image: registry.access.redhat.com/ubi8/ubi-minimal
+          name: hello-from-bash
+          script: |
+            #!/usr/bin/env bash
+            echo "Hello from Bash!"
