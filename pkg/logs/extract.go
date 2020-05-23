@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset *kubernetes.Clientset) (map[string][]byte, error) {
+func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset kubernetes.Interface) (map[string][]byte, error) {
 	prLogData := map[string][]byte{}
 	for _, tr := range pr.Status.TaskRuns {
 		logs, err := logsForPod(ctx, pr.ObjectMeta.Namespace, tr.Status.PodName, clientset)
@@ -23,7 +23,7 @@ func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset 
 	return prLogData, nil
 }
 
-func logsForPod(ctx context.Context, ns, name string, c *kubernetes.Clientset) ([]byte, error) {
+func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface) ([]byte, error) {
 	podLogOpts := corev1.PodLogOptions{}
 	req := c.CoreV1().Pods(ns).GetLogs(name, &podLogOpts)
 	podLogs, err := req.Stream()
