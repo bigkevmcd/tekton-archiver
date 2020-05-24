@@ -4,7 +4,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"knative.dev/pkg/apis"
 
-	"github.com/jenkins-x/go-scm/scm"
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
@@ -49,18 +48,4 @@ func runState(p *pipelinev1.PipelineRun) State {
 		}
 	}
 	return Pending
-}
-
-// convertState converts between pipeline run state, and the commit status.
-func convertState(s State) scm.State {
-	switch s {
-	case Failed:
-		return scm.StateFailure
-	case Pending:
-		return scm.StatePending
-	case Successful:
-		return scm.StateSuccess
-	default:
-		return scm.StateUnknown
-	}
 }

@@ -15,6 +15,7 @@ type logStreamer func(ns, name string, c kubernetes.Interface) (io.ReadCloser, e
 
 var defaultLogStreamer logStreamer = streamLogsForPod
 
+// PipelineRunLogs fetches the logs for each Pod associated with a PipelineRun.
 func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset kubernetes.Interface) (map[string][]byte, error) {
 	prLogData := map[string][]byte{}
 	for _, tr := range pr.Status.TaskRuns {
@@ -25,6 +26,15 @@ func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset 
 		prLogData[tr.Status.PodName] = logs
 	}
 	return prLogData, nil
+}
+
+// TaskRunLogs fetches the logs for the Pod associated with a TaskRun.
+func TaskRunLogs(ctx context.Context, tr *pipelinev1.TaskRun, clientset kubernetes.Interface) ([]byte, error) {
+	logs, err := logsForPod(ctx, tr.ObjectMeta.Namespace, tr.Status.PodName, clientset)
+	if err != nil {
+		return nil, err
+	}
+	return logs, nil
 }
 
 func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface) ([]byte, error) {

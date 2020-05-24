@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -85,6 +86,43 @@ func makePipelineRun() *pipelinev1.PipelineRun {
 				},
 			},
 		},
+	}
+}
+
+func makeTaskRun() *pipelinev1.TaskRun {
+	return &pipelinev1.TaskRun{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-task-run",
+			Namespace: "default",
+		},
+		Status: pipelinev1.TaskRunStatus{
+			TaskRunStatusFields: pipelinev1.TaskRunStatusFields{
+				PodName: testPodName,
+			},
+		},
+	}
+}
+
+func TestTaskRunLogs(t *testing.T) {
+	defer func(l logStreamer) {
+		defaultLogStreamer = l
+	}(defaultLogStreamer)
+
+	defaultLogStreamer = func(ns, name string, c kubernetes.Interface) (io.ReadCloser, error) {
+		return ioutil.NopCloser(strings.NewReader("testing from a pod")), nil
+	}
+
+	ctx := context.Background()
+	cl := fake.NewSimpleClientset(makePod())
+
+	logs, err := TaskRunLogs(ctx, makeTaskRun(), cl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []byte(`testing from a pod`)
+	if !reflect.DeepEqual(want, logs) {
+		t.Fatalf("logs don't match, got %s, want %s", logs, want)
 	}
 }
 
