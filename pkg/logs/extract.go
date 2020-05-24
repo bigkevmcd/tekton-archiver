@@ -11,6 +11,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type logStreamer func(ns, name string, c kubernetes.Interface) (io.ReadCloser, error)
+
+var defaultLogStreamer logStreamer = streamLogsForPod
+
 func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset kubernetes.Interface) (map[string][]byte, error) {
 	prLogData := map[string][]byte{}
 	for _, tr := range pr.Status.TaskRuns {
@@ -24,9 +28,7 @@ func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset 
 }
 
 func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface) ([]byte, error) {
-	podLogOpts := corev1.PodLogOptions{}
-	req := c.CoreV1().Pods(ns).GetLogs(name, &podLogOpts)
-	podLogs, err := req.Stream()
+	podLogs, err := defaultLogStreamer(ns, name, c)
 	if err != nil {
 		return nil, fmt.Errorf("error in opening stream: %w", err)
 	}
@@ -38,4 +40,12 @@ func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface) ([
 		return nil, fmt.Errorf("error in copy logs from pod to buffer: %w", err)
 	}
 	return buf.Bytes(), nil
+}
+
+// This is not currently testable using the fake client, as GetLogs() returns an
+// empty Request.
+func streamLogsForPod(ns, name string, c kubernetes.Interface) (io.ReadCloser, error) {
+	podLogOpts := corev1.PodLogOptions{}
+	req := c.CoreV1().Pods(ns).GetLogs(name, &podLogOpts)
+	return req.Stream()
 }
