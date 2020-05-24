@@ -11,15 +11,25 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// K8sExtractor is an implementation of the Extractor interface, getting the log
+// output using a Kubernetes client.
+type K8sExtractor struct {
+	clientset kubernetes.Interface
+	streamer  logStreamer
+}
+
 type logStreamer func(ns, name string, c kubernetes.Interface) (io.ReadCloser, error)
 
-var defaultLogStreamer logStreamer = streamLogsForPod
+// New creates and returns a new K8sExtractor.
+func New(c kubernetes.Interface) *K8sExtractor {
+	return &K8sExtractor{clientset: c, streamer: streamLogsForPod}
+}
 
-// PipelineRunLogs fetches the logs for each Pod associated with a PipelineRun.
-func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset kubernetes.Interface) (map[string][]byte, error) {
+// PipelineRun fetches the logs for each Pod associated with a PipelineRun.
+func (k *K8sExtractor) PipelineRun(ctx context.Context, pr *pipelinev1.PipelineRun) (map[string][]byte, error) {
 	prLogData := map[string][]byte{}
 	for _, tr := range pr.Status.TaskRuns {
-		logs, err := logsForPod(ctx, pr.ObjectMeta.Namespace, tr.Status.PodName, clientset)
+		logs, err := logsForPod(ctx, pr.ObjectMeta.Namespace, tr.Status.PodName, k.clientset, k.streamer)
 		if err != nil {
 			return nil, err
 		}
@@ -28,17 +38,17 @@ func PipelineRunLogs(ctx context.Context, pr *pipelinev1.PipelineRun, clientset 
 	return prLogData, nil
 }
 
-// TaskRunLogs fetches the logs for the Pod associated with a TaskRun.
-func TaskRunLogs(ctx context.Context, tr *pipelinev1.TaskRun, clientset kubernetes.Interface) ([]byte, error) {
-	logs, err := logsForPod(ctx, tr.ObjectMeta.Namespace, tr.Status.PodName, clientset)
+// TaskRun fetches the logs for the Pod associated with a TaskRun.
+func (k *K8sExtractor) TaskRun(ctx context.Context, tr *pipelinev1.TaskRun) ([]byte, error) {
+	logs, err := logsForPod(ctx, tr.ObjectMeta.Namespace, tr.Status.PodName, k.clientset, k.streamer)
 	if err != nil {
 		return nil, err
 	}
 	return logs, nil
 }
 
-func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface) ([]byte, error) {
-	podLogs, err := defaultLogStreamer(ns, name, c)
+func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface, streamer logStreamer) ([]byte, error) {
+	podLogs, err := streamer(ns, name, c)
 	if err != nil {
 		return nil, fmt.Errorf("error in opening stream: %w", err)
 	}
