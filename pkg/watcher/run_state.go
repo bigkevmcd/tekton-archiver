@@ -28,6 +28,10 @@ func (s State) String() string {
 	return names[s]
 }
 
+func (s State) Terminal() bool {
+	return s == Successful || s == Failed || s == Error
+}
+
 // runState returns whether or not a PipelineRun was successful or
 // not.
 //

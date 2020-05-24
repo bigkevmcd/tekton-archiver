@@ -7,6 +7,8 @@ import (
 	pipelineclientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labelsv1 "k8s.io/apimachinery/pkg/labels"
+
+	"github.com/bigkevmcd/tekton-archiver/pkg/logs"
 )
 
 type logger interface {
@@ -16,7 +18,7 @@ type logger interface {
 	Errorw(msg string, keysAndValues ...interface{})
 }
 
-func WatchPipelineRuns(stop <-chan struct{}, tektonClient pipelineclientset.Interface, ns string, l logger) {
+func WatchPipelineRuns(stop <-chan struct{}, e logs.Extractor, tektonClient pipelineclientset.Interface, ns string, l logger) {
 	l.Infow("starting to watch for PipelineRuns", "ns", ns)
 	api := tektonClient.TektonV1beta1().PipelineRuns(ns)
 	listOptions := metav1.ListOptions{

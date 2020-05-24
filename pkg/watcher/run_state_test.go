@@ -30,6 +30,26 @@ func TestGetPipelineRunStatus(t *testing.T) {
 	}
 }
 
+func TestTerminalStates(t *testing.T) {
+	stateTests := []struct {
+		state    State
+		terminal bool
+	}{
+		{Pending, false},
+		{Failed, true},
+		{Successful, true},
+		{Error, true},
+		{Unknown, false},
+	}
+
+	for _, tt := range stateTests {
+		if v := tt.state.Terminal(); v != tt.terminal {
+			t.Errorf("Terminal state for %s want %v, got %v", tt.state, tt.terminal, v)
+		}
+	}
+
+}
+
 func makePipelineRunWithCondition(s apis.ConditionType, c corev1.ConditionStatus) *pipelinev1.PipelineRun {
 	return &pipelinev1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
