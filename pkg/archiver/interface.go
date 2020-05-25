@@ -1,6 +1,8 @@
 package archiver
 
 import (
+	"context"
+
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 )
 
@@ -9,5 +11,6 @@ import (
 type LogArchiver interface {
 	// Archive the PipelineRun output and return a URL to retrieve
 	// the contents later, or an error.
-	ArchivePipelineRun(*pipelinev1.PipelineRun, []byte) (string, error)
+	ArchivePipelineRun(context.Context, *pipelinev1.PipelineRun) ([]string, error)
+	ArchiveTaskRun(context.Context, *pipelinev1.TaskRun) ([]string, error)
 }

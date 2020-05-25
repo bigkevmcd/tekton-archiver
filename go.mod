@@ -4,10 +4,10 @@ go 1.14
 
 require (
 	github.com/google/go-cmp v0.4.0
-	github.com/jenkins-x/go-scm v1.5.137
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.8.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
 	github.com/tektoncd/pipeline v0.12.1
