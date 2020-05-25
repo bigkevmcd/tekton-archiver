@@ -16,6 +16,27 @@ spec:
       serviceAccountName: tekton-archiver
       containers:
         - name: tekton-archiver
-          image: quay.io/kmcdermo/tekton-archiver:latest
+          image: quay.io/bigkevmcd/tekton-archiver:latest
           imagePullPolicy: Always
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: archiver-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: archiver-secret
+                  key: AWS_REGION
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: archiver-secret
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: archiver-secret
+                  key: BUCKET_NAME
           args: ["archive"]

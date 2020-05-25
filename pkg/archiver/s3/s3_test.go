@@ -2,57 +2,58 @@ package s3
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/spf13/afero"
-	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 
-	"github.com/bigkevmcd/tekton-archiver/pkg/logs"
-	"github.com/bigkevmcd/tekton-archiver/test"
+	"github.com/bigkevmcd/tekton-archiver/pkg/archiver"
 )
 
-func TestArchivingPipelineRun(t *testing.T) {
-	fs := afero.NewMemMapFs()
-	a := New(fs, &mockExtractor{}, "/tmp/logs")
-	pr := test.MakePipelineRun("my-test-pr", "my-test-pr-pod-12345")
+var _ archiver.Interface = (*S3Archiver)(nil)
 
-	paths, err := a.ArchivePipelineRun(context.TODO(), pr)
+func TestArchive(t *testing.T) {
+	uploader := &stubUploader{files: map[string]string{}, bucket: "new-bucket"}
+	a := New(uploader)
+
+	paths, err := a.Archive(context.TODO(), map[string][]byte{
+		"my-test-pr/my-test-pr-pod-12345.txt": []byte("test-output"),
+		"my-test-pr/my-test-pr-pod-23456.txt": []byte("other-output"),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	want := []string{"/tmp/logs/my-test-pr/my-test-pr-pod-12345.txt"}
+	want := []string{
+		"new-bucket:my-test-pr/my-test-pr-pod-12345.txt",
+		"new-bucket:my-test-pr/my-test-pr-pod-23456.txt",
+	}
 	if diff := cmp.Diff(want, paths); diff != "" {
 		t.Fatalf("failed to archive paths:\n%s", diff)
 	}
-	b := mustReadFile(t, fs, "/tmp/logs/my-test-pr/my-test-pr-pod-12345.txt")
-	if string(b) != "test-output" {
-		t.Fatalf("got %s, want %s", string(b), "test-output")
+
+	wantUploads := map[string]string{
+		"new-bucket:my-test-pr/my-test-pr-pod-12345.txt": "test-output",
+		"new-bucket:my-test-pr/my-test-pr-pod-23456.txt": "other-output",
+	}
+	if diff := cmp.Diff(wantUploads, uploader.files); diff != "" {
+		t.Fatalf("uploaded files:\n%s", diff)
 	}
 }
 
-var _ logs.Extractor = (*mockExtractor)(nil)
-
-type mockExtractor struct {
+type stubUploader struct {
+	bucket string
+	files  map[string]string
 }
 
-func (m *mockExtractor) PipelineRun(ctx context.Context, pr *pipelinev1.PipelineRun) (map[string][]byte, error) {
-	data := map[string][]byte{
-		"my-test-pr-pod-12345": []byte("test-output"),
-	}
-	return data, nil
-}
-
-func (m *mockExtractor) TaskRun(ctx context.Context, pr *pipelinev1.TaskRun) ([]byte, error) {
-	return nil, nil
-}
-
-func mustReadFile(t *testing.T, fs afero.Fs, fname string) []byte {
-	t.Helper()
-	b, err := afero.ReadFile(fs, fname)
+func (s *stubUploader) UploadWithContext(ctx context.Context, filename string, body io.Reader) (string, error) {
+	key := fmt.Sprintf("%s:%s", s.bucket, filename)
+	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		t.Fatalf("failed to read file %s: %s", fname, err)
+		return "", err
 	}
-	return b
+	s.files[key] = string(data)
+	return key, nil
 }

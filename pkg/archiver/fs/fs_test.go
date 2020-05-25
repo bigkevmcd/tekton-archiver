@@ -10,7 +10,7 @@ import (
 	"github.com/bigkevmcd/tekton-archiver/pkg/archiver"
 )
 
-var _ archiver.Archiver = (*FsArchiver)(nil)
+var _ archiver.Interface = (*FsArchiver)(nil)
 
 func TestArchive(t *testing.T) {
 	fs := afero.NewMemMapFs()

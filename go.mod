@@ -3,6 +3,7 @@ module github.com/bigkevmcd/tekton-archiver
 go 1.14
 
 require (
+	github.com/aws/aws-sdk-go v1.27.1
 	github.com/google/go-cmp v0.4.0
 	github.com/onsi/ginkgo v1.11.0 // indirect
 	github.com/onsi/gomega v1.8.1 // indirect

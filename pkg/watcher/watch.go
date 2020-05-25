@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"context"
 	"fmt"
 
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -8,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labelsv1 "k8s.io/apimachinery/pkg/labels"
 
+	"github.com/bigkevmcd/tekton-archiver/pkg/archiver"
 	"github.com/bigkevmcd/tekton-archiver/pkg/logs"
 )
 
@@ -18,7 +20,7 @@ type logger interface {
 	Errorw(msg string, keysAndValues ...interface{})
 }
 
-func WatchPipelineRuns(stop <-chan struct{}, e logs.Extractor, tektonClient pipelineclientset.Interface, ns string, l logger) {
+func WatchPipelineRuns(stop <-chan struct{}, e logs.Extractor, arc archiver.Interface, tektonClient pipelineclientset.Interface, ns string, l logger) {
 	l.Infow("starting to watch for PipelineRuns", "ns", ns)
 	api := tektonClient.TektonV1beta1().PipelineRuns(ns)
 	listOptions := metav1.ListOptions{
@@ -36,7 +38,7 @@ func WatchPipelineRuns(stop <-chan struct{}, e logs.Extractor, tektonClient pipe
 			return
 		case v := <-ch:
 			pr := v.Object.(*pipelinev1.PipelineRun)
-			err := handlePipelineRun(tektonClient, pr, l)
+			err := handlePipelineRun(e, arc, pr, l)
 			if err != nil {
 				l.Infow(fmt.Sprintf("error handling PipelineRun: %s", err), "name", pr.ObjectMeta.Name)
 			}
@@ -44,8 +46,20 @@ func WatchPipelineRuns(stop <-chan struct{}, e logs.Extractor, tektonClient pipe
 	}
 }
 
-func handlePipelineRun(tektonClient pipelineclientset.Interface, pr *pipelinev1.PipelineRun, l logger) error {
+func handlePipelineRun(e logs.Extractor, arc archiver.Interface, pr *pipelinev1.PipelineRun, l logger) error {
 	newState := runState(pr)
+	if newState != Successful {
+		return nil
+	}
 	l.Infof("Received a PipelineRun %#v %s", pr.Status, newState)
+	ctx := context.Background()
+	logs, err := e.PipelineRun(ctx, pr)
+	if err != nil {
+		return err
+	}
+	urls, err := arc.Archive(ctx, logs)
+	for _, v := range urls {
+		l.Infof("saved url: %s\n", v)
+	}
 	return nil
 }

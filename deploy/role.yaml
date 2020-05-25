@@ -25,6 +25,8 @@ rules:
   - ""
   resources:
   - secrets
+  - pods
+  - pods/log
   verbs:
   - get
 ---
