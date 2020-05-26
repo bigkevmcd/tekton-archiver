@@ -59,7 +59,7 @@ func handlePipelineRun(e logs.Extractor, arc archiver.Interface, pr *pipelinev1.
 	}
 	urls, err := arc.Archive(ctx, logs)
 	for _, v := range urls {
-		l.Infof("saved url: %s\n", v)
+		l.Infof("saved url: %s", v)
 	}
 	return nil
 }
