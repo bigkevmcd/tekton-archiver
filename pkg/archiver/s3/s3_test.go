@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,7 +26,7 @@ func TestArchive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	sort.Strings(paths)
 	want := []string{
 		"new-bucket:my-test-pr/my-test-pr-pod-12345.txt",
 		"new-bucket:my-test-pr/my-test-pr-pod-23456.txt",
