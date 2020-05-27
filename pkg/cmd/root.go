@@ -11,12 +11,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 }
 
-func logIfError(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
-}
-
 func makeRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tekton-archiver",
