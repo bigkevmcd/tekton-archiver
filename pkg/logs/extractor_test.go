@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -57,23 +56,6 @@ func TestPipelineRunLogsPodNotFound(t *testing.T) {
 	assertErrorMatch(t, "error in opening stream: pod \"test-pod-12345\" not found", err)
 }
 
-func TestTaskRunLogs(t *testing.T) {
-	cl := fake.NewSimpleClientset(makePod())
-	e := New(cl)
-	e.streamer = func(ns, name string, c kubernetes.Interface) (io.ReadCloser, error) {
-		return ioutil.NopCloser(strings.NewReader("testing from a pod")), nil
-	}
-	logs, err := e.TaskRun(context.Background(), makeTaskRun())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := []byte(`testing from a pod`)
-	if !reflect.DeepEqual(want, logs) {
-		t.Fatalf("logs don't match, got %s, want %s", logs, want)
-	}
-}
-
 func makePipelineRun() *pipelinev1.PipelineRun {
 	return &pipelinev1.PipelineRun{
 		ObjectMeta: metav1.ObjectMeta{
@@ -91,20 +73,6 @@ func makePipelineRun() *pipelinev1.PipelineRun {
 						},
 					},
 				},
-			},
-		},
-	}
-}
-
-func makeTaskRun() *pipelinev1.TaskRun {
-	return &pipelinev1.TaskRun{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-task-run",
-			Namespace: "default",
-		},
-		Status: pipelinev1.TaskRunStatus{
-			TaskRunStatusFields: pipelinev1.TaskRunStatusFields{
-				PodName: testPodName,
 			},
 		},
 	}

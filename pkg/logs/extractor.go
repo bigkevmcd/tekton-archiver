@@ -38,15 +38,6 @@ func (k *K8sExtractor) PipelineRun(ctx context.Context, pr *pipelinev1.PipelineR
 	return prLogData, nil
 }
 
-// TaskRun fetches the logs for the Pod associated with a TaskRun.
-func (k *K8sExtractor) TaskRun(ctx context.Context, tr *pipelinev1.TaskRun) ([]byte, error) {
-	logs, err := logsForPod(ctx, tr.ObjectMeta.Namespace, tr.Status.PodName, k.clientset, k.streamer)
-	if err != nil {
-		return nil, err
-	}
-	return logs, nil
-}
-
 func logsForPod(ctx context.Context, ns, name string, c kubernetes.Interface, streamer logStreamer) ([]byte, error) {
 	podLogs, err := streamer(ns, name, c)
 	if err != nil {

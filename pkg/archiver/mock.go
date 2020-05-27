@@ -19,7 +19,3 @@ func (m *mockExtractor) PipelineRun(ctx context.Context, pr *pipelinev1.Pipeline
 	}
 	return data, nil
 }
-
-func (m *mockExtractor) TaskRun(ctx context.Context, pr *pipelinev1.TaskRun) ([]byte, error) {
-	return nil, nil
-}

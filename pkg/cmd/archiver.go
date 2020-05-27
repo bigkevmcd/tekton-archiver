@@ -22,7 +22,7 @@ import (
 func makeArchiveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "archive",
-		Short: "archive Tekton PipelineRuns and TaskRuns",
+		Short: "archive Tekton PipelineRuns",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterConfig, err := rest.InClusterConfig()
 			if err != nil {

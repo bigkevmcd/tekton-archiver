@@ -3,7 +3,7 @@ kind: PipelineRun
 metadata:
   name: demo-pipeline-run
   labels:
-    "archive.tekton.dev": "true"
+    "archive-pipeline-run": "true"
 spec:
   serviceAccountName: 'default'
   pipelineSpec:

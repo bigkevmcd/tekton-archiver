@@ -24,7 +24,7 @@ func WatchPipelineRuns(stop <-chan struct{}, e logs.Extractor, arc archiver.Inte
 	l.Infow("starting to watch for PipelineRuns", "ns", ns)
 	api := tektonClient.TektonV1beta1().PipelineRuns(ns)
 	listOptions := metav1.ListOptions{
-		LabelSelector: labelsv1.Set(map[string]string{"archive.tekton.dev": "true"}).AsSelector().String(),
+		LabelSelector: labelsv1.Set(map[string]string{"pipelinerun": "archive"}).AsSelector().String(),
 	}
 	watcher, err := api.Watch(listOptions)
 	if err != nil {
