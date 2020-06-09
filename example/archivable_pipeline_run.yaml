@@ -5,7 +5,7 @@ metadata:
   labels:
     "archive-pipeline-run": "true"
 spec:
-  serviceAccountName: 'default'
+  serviceAccountName: default
   pipelineSpec:
     tasks:
     - name: hello-task
